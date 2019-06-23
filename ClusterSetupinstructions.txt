@@ -1,0 +1,37 @@
+Nifi Cluster Config:
+1. Serverless cluster
+2. Zookeeper electes a co-rodinator
+
+=============================
+File: conf/nifi.properties:
+=============================
+Nifi.web.http.host: where Web UI for that host can be accessed (Eg: node1)
+Nifi.web.http.port: Port where Web UI for that host can be responding (Eg: 8080)
+nifi.cluster.is.node=true
+nifi.cluster.node.address=node1 (host name)
+nifi.cluster.node.protocol.port=1212 (port on which cluster can internally communicate)
+nifi.zookeeper.connect.string='Comma seprated list of hosts'
+
+=============================
+File: conf/statemanagement.xml :
+=============================
+Under <cluster-provider> section provide the values for following properties.
+"Connect String": same as in 'nifi.properties' file.
+"Root Node": one of the nodes from connection string. Eg:'/nifi1'
+
+
+1. Two important nodes are elected when Nifi starts as a cluster:
+	1. Cluster Coordinator: Co-ordinated the activities of the cluster.
+	2. Primary node: If any task cannot be done in parallel, line fetching a file from FTP, then that task has to be done by the 'Primary node'.
+2. System checks the status of the connected nodes via 'Heartbeat', where all nodes sends heartbeat to co-ordinatoe node.
+3. Changes to the flows can be made to the UI of any node and they are the replicated to every node in the cluster.
+4. There are 4 states of a node:
+	a. Connected
+	b. Disconnected
+	c. Offloaded (a 'Disconnected' node can be 'Offloaded' where is starts sharing all its queued flowfiles)
+	d. Deleted (node ones 'deleted' cannot be rejoined into the cluster)
+5. Decommission Nodes:
+	a. Disconnect the node.
+	b. Once disconnect completes, offload the node.
+	c. Once offload completes, delete the node.
+	d. Once the delete request has finished, stop/remove the NiFi service on the host.
